@@ -437,9 +437,6 @@ static int hci_smd_register_dev(struct hci_smd_data *hsmd)
 	/* Disable the read interrupts on the channel */
 	smd_disable_read_intr(hsmd->event_channel);
 	smd_disable_read_intr(hsmd->data_channel);
-
-	/* sleep a while to let smd channels are ready */
-	msleep(10);
 	if (hci_register_dev(hdev) < 0) {
 		PR_BT_ERR("Can't register HCI device");
 		hci_free_dev(hdev);

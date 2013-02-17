@@ -795,9 +795,7 @@ static uint16_t vcm_clib_min,vcm_clib_med,vcm_clib_max;
 
 static int s5k3h2yx_read_vcm_clib(struct sensor_cfg_data *cdata, struct msm_sensor_ctrl_t *s_ctrl)
 {
-	/* HTC_START (klockwork issue)*/
-	int32_t rc=0;
-	/* HTC_END */
+	uint8_t rc=0;
 	unsigned short info_value = 0;
 
 	struct msm_camera_i2c_client *s5k3h2yx_msm_camera_i2c_client = s_ctrl->sensor_i2c_client;

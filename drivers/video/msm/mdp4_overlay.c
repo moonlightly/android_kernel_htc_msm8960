@@ -412,12 +412,9 @@ void mdp4_overlay_dmap_cfg(struct msm_fb_data_type *mfd, int lcdc)
 void mdp4_overlay_dmap_xy(struct mdp4_overlay_pipe *pipe)
 {
 	uint32 off, bpp;
-	bool enable_mdp = false;
 
-	if (mdp_is_in_isr == FALSE) {
+	if (mdp_is_in_isr == FALSE)
 		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
-		enable_mdp = true;
-	}
 
 	/* dma_p source */
 	MDP_OUTP(MDP_BASE + 0x90004,
@@ -442,7 +439,7 @@ void mdp4_overlay_dmap_xy(struct mdp4_overlay_pipe *pipe)
 	/* dma_p dest */
 	MDP_OUTP(MDP_BASE + 0x90010, (pipe->dst_y << 16 | pipe->dst_x));
 
-	if (enable_mdp)
+	if (mdp_is_in_isr == FALSE)
 		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 }
 
@@ -1221,7 +1218,6 @@ void mdp4_overlayproc_cfg(struct mdp4_overlay_pipe *pipe)
 {
 	uint32 data, intf;
 	char *overlay_base;
-	bool enable_mdp = false;
 
 	intf = 0;
 	if (pipe->mixer_num == MDP4_MIXER2)
@@ -1234,10 +1230,8 @@ void mdp4_overlayproc_cfg(struct mdp4_overlay_pipe *pipe)
 	} else
 		overlay_base = MDP_BASE + MDP4_OVERLAYPROC0_BASE;/* 0x10000 */
 
-	if (mdp_is_in_isr == FALSE) {
+	if (mdp_is_in_isr == FALSE)
 		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
-		enable_mdp = true;
-	}
 
 	/*
 	 * BLT only siupport at primary display
@@ -1321,7 +1315,7 @@ void mdp4_overlayproc_cfg(struct mdp4_overlay_pipe *pipe)
 	outpdw(overlay_base + 0x0014, 0x4);	/* GC_LUT_EN, 888 */
 #endif
 
-	if (enable_mdp)
+	if (mdp_is_in_isr == FALSE)
 		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 }
 
@@ -1363,7 +1357,7 @@ int mdp4_mixer_info(int mixer_num, struct mdp_mixer_info *info)
 	int ndx, cnt;
 	struct mdp4_overlay_pipe *pipe;
 
-	if (mixer_num >= MDP4_MIXER_MAX)
+	if (mixer_num > MDP4_MIXER_MAX)
 		return -ENODEV;
 
 	cnt = 0;
@@ -2240,7 +2234,7 @@ static int mdp4_overlay_is_rgb_type(int format)
 static uint32 mdp4_overlay_get_perf_level(struct mdp_overlay *req,
 					  struct msm_fb_data_type *mfd)
 {
-	int is_fg = 0;
+	int is_fg;
 
 	if (req->is_fg && ((req->alpha & 0x0ff) == 0xff))
 		is_fg = 1;
@@ -2633,7 +2627,7 @@ int mdp4_overlay_update_layers(struct msm_fb_data_type *mfd, int mixer)
 	u32 mask = 0, pipe_cnt = 0;
 	boolean pipe_mixer_change = false;
 
-	if (mixer >= MDP4_MIXER_MAX)
+	if (mixer > MDP4_MIXER_MAX)
 		return -ENODEV;
 
 	for (stage = MDP4_MIXER_STAGE0; stage < MDP4_MIXER_STAGE_MAX; stage++) {

@@ -163,7 +163,6 @@ struct sdio_func_tuple;
 struct mmc_card {
 	struct mmc_host		*host;		/* the host this device belongs to */
 	struct device		dev;		/* the device */
-	struct device		*mmcblk_dev;/* block device */
 	unsigned int		rca;		/* relative card address of device */
 	unsigned int		type;		/* card type */
 #define MMC_TYPE_MMC		0		/* MMC card */
@@ -222,7 +221,6 @@ struct mmc_card {
 
 	struct dentry		*debugfs_root;
 	unsigned int		removed;
-	unsigned int		wr_perf; /* write performance in MB/s */
 };
 
 /*

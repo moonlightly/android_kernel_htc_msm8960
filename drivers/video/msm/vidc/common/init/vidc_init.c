@@ -156,12 +156,11 @@ static int __devinit vidc_720p_probe(struct platform_device *pdev)
 
 	/* HTC_START (klockwork issue)*/
 	if (resource && resource->start)
-	{
-		vidc_device_p->phys_base = resource->start;
-		vidc_device_p->virt_base = ioremap(resource->start,
-		resource->end - resource->start + 1);
-	}
-	/* HTC_END */
+	vidc_device_p->phys_base = resource->start;
+        /* HTC_END */
+	vidc_device_p->virt_base = ioremap(resource->start,
+	resource->end - resource->start + 1);
+
 	if (!vidc_device_p->virt_base) {
 		ERR("%s() : ioremap failed\n", __func__);
 		return -ENOMEM;

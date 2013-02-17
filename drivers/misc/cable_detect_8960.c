@@ -39,7 +39,7 @@
 #endif
 
 #include "linux/mfd/pm8xxx/pm8921-charger.h"
-extern bool cable_det_before_vbus;
+
 static int vbus;
 
 static struct switch_dev dock_switch = {
@@ -324,7 +324,7 @@ static int cable_detect_get_type(struct cable_detect_info *pInfo)
 		if (adc > -100 && adc < 100)
 			type = second_detect(pInfo);
 		else {
-			if (adc > 150 && adc < 220)
+			if (adc > 140 && adc < 220)
 				type = DOCK_STATE_CAR;
 			else if (adc > 370 && adc < 440)
 				type = DOCK_STATE_USB_HEADSET;
@@ -429,10 +429,8 @@ static void cable_detect_handler(struct work_struct *w)
 		switch_set_state(&dock_switch, DOCK_STATE_MHL);
 		pInfo->accessory_type = DOCK_STATE_MHL;
 #ifdef CONFIG_INTERNAL_CHARGING_SUPPORT
-		if (!pInfo->mhl_internal_3v3 && !vbus) {
-			cable_det_before_vbus = 1;
+		if (!pInfo->mhl_internal_3v3 && !vbus)
 			send_cable_connect_notify(CONNECT_TYPE_INTERNAL);
-		}
 
 #endif
 		sii9234_mhl_device_wakeup();

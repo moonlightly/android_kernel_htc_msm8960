@@ -781,9 +781,7 @@ static int check_modem_task_ready(int channel)
 			DIAG_INFO("%s:modem status=smd not ready\n", __func__);
 			return -EAGAIN;
 		}
-		mutex_lock(&driver->diag_data_mutex);
 		smd_write(driver->ch, phone_status, 4);
-		mutex_unlock(&driver->diag_data_mutex);
 		break;
 #if defined(CONFIG_DIAG_HSIC_PIPE)
 	case XPST_HSIC:
@@ -1098,9 +1096,7 @@ static ssize_t diag2arm9_write(struct file *fp, const char __user *buf,
 				r = -EFAULT;
 				break;
 			}
-			mutex_lock(&driver->diag_data_mutex);
 			smd_write(driver->ch, ctxt->toARM9_buf, hdlc.dest_idx-3);
-			mutex_unlock(&driver->diag_data_mutex);
 			break;
 		case DM9KONLY:
 			DIAG_INFO("%s:above date to DM9KONLY\n", __func__);
@@ -1182,9 +1178,7 @@ static ssize_t diag2arm9_write(struct file *fp, const char __user *buf,
 			} else {
 				DIAG_INFO("%s:DM7K9KDIFF to 7K\n", __func__);
 #if defined(CONFIG_MACH_MECHA)
-				mutex_lock(&driver->diag_data_mutex);
 				smd_write(driver->ch, ctxt->DM_buf, writed);
-				mutex_unlock(&driver->diag_data_mutex);
 #endif
 #if defined(CONFIG_MACH_VIGOR)
 				/* send to 8k after decode HDLC*/
@@ -1202,9 +1196,7 @@ static ssize_t diag2arm9_write(struct file *fp, const char __user *buf,
 					r = -EFAULT;
 					break;
 				}
-				mutex_lock(&driver->diag_data_mutex);
 				smd_write(driver->ch, ctxt->toARM9_buf, hdlc.dest_idx-3);
-				mutex_unlock(&driver->diag_data_mutex);
 #endif
 			}
 			break;
@@ -1212,9 +1204,7 @@ static ssize_t diag2arm9_write(struct file *fp, const char __user *buf,
 		case DM7KONLY:
 			DIAG_INFO("%s:above data to DM7KONLY\n", __func__);
 #if !defined(CONFIG_MACH_VIGOR)
-			mutex_lock(&driver->diag_data_mutex);
 			smd_write(driver->ch, ctxt->DM_buf, writed);
-			mutex_unlock(&driver->diag_data_mutex);
 #else
 			/* send to 8k after decode HDLC*/
 			hdlc.dest_ptr = ctxt->toARM9_buf;
@@ -1231,9 +1221,7 @@ static ssize_t diag2arm9_write(struct file *fp, const char __user *buf,
 				r = -EFAULT;
 				break;
 			}
-			mutex_lock(&driver->diag_data_mutex);
 			smd_write(driver->ch, ctxt->toARM9_buf, hdlc.dest_idx-3);
-			mutex_unlock(&driver->diag_data_mutex);
 #endif
 			break;
 		case NO_DEF_ID:

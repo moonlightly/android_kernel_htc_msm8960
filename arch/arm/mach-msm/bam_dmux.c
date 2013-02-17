@@ -34,7 +34,6 @@
 #include <mach/subsystem_notif.h>
 #include <mach/socinfo.h>
 #include <mach/subsystem_restart.h>
-#include <mach/msm_ipc_logging.h>
 #include <mach/board_htc.h>
 #include <mach/system.h>
 
@@ -212,8 +211,6 @@ static DECLARE_WORK(rx_timer_work, rx_timer_work_func);
 
 static struct workqueue_struct *bam_mux_rx_workqueue;
 static struct workqueue_struct *bam_mux_tx_workqueue;
-
-static void *log_context;
 
 /* A2 power collaspe */
 #define UL_TIMEOUT_DELAY 1000	/* in ms */
@@ -842,7 +839,6 @@ int msm_bam_dmux_write(uint32_t id, struct sk_buff *skb)
 	INIT_WORK(&pkt->work, bam_mux_write_done);
 	spin_lock_irqsave(&bam_tx_pool_spinlock, flags);
 	list_add_tail(&pkt->list_node, &bam_tx_pool);
-	ipc_log_string(log_context, "<DMUX2> %s info: %p skb: %p node: %p\n", __func__, pkt, pkt->skb, &pkt->list_node);
 	rc = sps_transfer_one(bam_tx_pipe, dma_address, skb->len,
 				pkt, SPS_IOVEC_FLAG_INT | SPS_IOVEC_FLAG_EOT);
 	if (rc) {
@@ -1176,7 +1172,6 @@ static void bam_mux_tx_notify(struct sps_event_notify *notify)
 	switch (notify->event_id) {
 	case SPS_EVENT_EOT:
 		pkt = notify->data.transfer.user;
-		ipc_log_string(log_context, "<DMUX2> %s info: %p skb: %p node: %p\n", __func__, pkt, pkt->skb, &pkt->list_node);
 		if (!pkt->is_cmd)
 			dma_unmap_single(NULL, pkt->dma_address,
 						pkt->skb->len,
@@ -2405,8 +2400,6 @@ static int __init bam_dmux_init(void)
 	}
 	if (get_kernel_flag() & KERNEL_FLAG_RIL_DBG_RMNET)
 		ril_debug_flag = 1;
-
-	log_context = ipc_log_context_create(10, "bam_dmux");
 
 	subsys_notif_register_notifier("modem", &restart_notifier);
 	return platform_driver_register(&bam_dmux_driver);

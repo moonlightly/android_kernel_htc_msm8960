@@ -109,19 +109,13 @@ int mdp_lcdc_on(struct platform_device *pdev)
 	buf_offset = fbi->var.xoffset * bpp +
 		fbi->var.yoffset * fbi->fix.line_length;
 
-	if (unlikely(lcdc_pipe == NULL)) {
+	if (lcdc_pipe == NULL) {
 		ptype = mdp4_overlay_format2type(mfd->fb_imgType);
-		if (unlikely(ptype < 0)) {
-			printk(KERN_ERR "%s: format2type failed\n", __func__);
-			mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
-			return -EINVAL;
-		}
+		if (ptype < 0)
+			printk(KERN_INFO "%s: format2type failed\n", __func__);
 		pipe = mdp4_overlay_pipe_alloc(ptype, MDP4_MIXER0);
-		if (unlikely(pipe == NULL)) {
-			printk(KERN_ERR "%s: pipe_alloc failed\n", __func__);
-			mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
-			return -EPIPE;
-		}
+		if (pipe == NULL)
+			printk(KERN_INFO "%s: pipe_alloc failed\n", __func__);
 		pipe->pipe_used++;
 		pipe->mixer_stage  = MDP4_MIXER_STAGE_BASE;
 		pipe->mixer_num  = MDP4_MIXER0;

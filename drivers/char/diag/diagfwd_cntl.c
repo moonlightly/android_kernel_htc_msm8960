@@ -193,7 +193,7 @@ static void diag_smd_cntl_send_req(int proc_num)
 		kfree(dump_buf);
 	}
 	kfree(pkt_params);
-	if (flag || smd_cur_packet_size(smd_ch) > 0) {
+	if (flag) {
 		/* Poll SMD CNTL channels to check for data */
 		if (proc_num == MODEM_PROC)
 			diag_smd_cntl_notify(NULL, SMD_EVENT_DATA);

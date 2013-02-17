@@ -2345,6 +2345,15 @@ static void mpage_da_map_and_submit(struct mpage_da_data *mpd)
 	}
 
 	if (ext4_should_order_data(mpd->inode)) {
+		if (EXT4_I(mpd->inode)->jinode == NULL) {
+			/*
+			   should not happen: inode got dirty data without
+			   being opened for writing
+			*/
+			ext4_msg(mpd->inode->i_sb, KERN_CRIT,
+				"inode #%lu has NULL jinode", mpd->inode->i_ino);
+			return;
+		}
 		err = ext4_jbd2_file_inode(handle, mpd->inode);
 		if (err)
 			/* This only happens if the journal is aborted */

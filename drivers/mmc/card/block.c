@@ -278,7 +278,7 @@ static int mmc_blk_ioctl_cmd(struct block_device *bdev,
 	struct mmc_data data = {0};
 	struct mmc_request mrq = {0};
 	struct scatterlist sg;
-	int err = 0;
+	int err;
 
 	/*
 	 * The caller must have CAP_SYS_RAWIO, and must be calling this on the
@@ -2131,7 +2131,6 @@ static int mmc_blk_probe(struct mmc_card *card)
 		if (mmc_add_disk(part_md))
 			goto out;
 	}
-	card->mmcblk_dev = disk_to_dev(md->disk);
 	return 0;
 
  out:

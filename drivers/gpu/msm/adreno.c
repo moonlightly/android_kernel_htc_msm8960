@@ -470,7 +470,7 @@ adreno_probe(struct platform_device *pdev)
 	}
 
 	device->flags &= ~KGSL_FLAGS_SOFT_RESET;
-
+	device->total_busy = 0;
 	return 0;
 
 error_close_rb:
@@ -1340,13 +1340,8 @@ static void adreno_power_stats(struct kgsl_device *device,
 				gpu_freq);
 
 		stats->busy_time = (stats->busy_time > stats->total_time) ? stats->total_time : stats->busy_time;
-		device->gputime.total = device->gputime.total + stats->total_time;
-		device->gputime.busy = device->gputime.busy + stats->busy_time;
-		device->gputime_in_state[device->pwrctrl.active_pwrlevel].total
-				= device->gputime_in_state[device->pwrctrl.active_pwrlevel].total + stats->total_time;
-		device->gputime_in_state[device->pwrctrl.active_pwrlevel].busy
-				= device->gputime_in_state[device->pwrctrl.active_pwrlevel].busy + stats->busy_time;
-
+		device->total_busy = device->total_busy + stats->busy_time;
+		device->total_time = device->total_time + stats->total_time;
 		adreno_regwrite(device,
 			REG_CP_PERFMON_CNTL,
 			REG_PERF_MODE_CNT |
