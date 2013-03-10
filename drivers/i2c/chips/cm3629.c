@@ -159,7 +159,7 @@ static int lightsensor_enable(struct cm3629_info *lpi);
 static int lightsensor_disable(struct cm3629_info *lpi);
 static void psensor_initial_cmd(struct cm3629_info *lpi);
 static int ps_near;
-static int pocket_mode_flag;
+static int pocket_mode_flag, psensor_enable_by_touch;
 #if (0)
 static int I2C_RxData(uint16_t slaveAddr, uint8_t *rxData, int length)
 {
@@ -533,13 +533,13 @@ static void report_psensor_input_event(struct cm3629_info *lpi, int interrupt_fl
 	
 
 	ret = get_ps_adc_value(&ps1_adc, &ps2_adc);
-	if (pocket_mode_flag == 1) {
-		D("pocket_mode_flag is %d", pocket_mode_flag);
+	if (pocket_mode_flag == 1 || psensor_enable_by_touch == 1) {
+		D("[PS][cm3629] pocket_mode_flag: %d, psensor_enable_by_touch: %d", pocket_mode_flag, psensor_enable_by_touch);
 		while (index <= 10 && ps1_adc == 0) {
-			D("ps1_adc = 0 retry");
+			D("[PS][cm3629]ps1_adc = 0 retry");
 			get_ps_adc_value(&ps1_adc, &ps2_adc);
 			if(ps1_adc != 0) {
-				D("retry work");
+				D("[PS][cm3629]retry work");
 				break;
 			}
 			mdelay(1);
@@ -936,14 +936,15 @@ static int psensor_enable(struct cm3629_info *lpi)
 	uint8_t ps_adc2 = 0;
 #endif
 	mutex_lock(&ps_enable_mutex);
-	sensor_lpm_power(0);
-	D("[PS][cm3629] %s\n", __func__);
+
+	D("[PS][cm3629] %s +\n", __func__);
 	if (lpi->ps_enable) {
 		D("[PS][cm3629] %s: already enabled %d\n", __func__, lpi->ps_enable);
 		lpi->ps_enable++;
 		mutex_unlock(&ps_enable_mutex);
 		return 0;
 	}
+	sensor_lpm_power(0);
 	blocking_notifier_call_chain(&psensor_notifier_list, 1, NULL);
 	lpi->j_start = jiffies;
 	
@@ -1004,6 +1005,7 @@ static int psensor_enable(struct cm3629_info *lpi)
 	}
 #endif
 	mutex_unlock(&ps_enable_mutex);
+	D("[PS][cm3629] %s -\n", __func__);
 	return ret;
 }
 
@@ -1013,10 +1015,6 @@ static int psensor_disable(struct cm3629_info *lpi)
 	char cmd[2];
 
 	mutex_lock(&ps_enable_mutex);
-	lpi->ps_conf1_val = lpi->ps_conf1_val_from_board;
-	lpi->ps_conf2_val = lpi->ps_conf2_val_from_board;
-
-	lpi->ps_pocket_mode = 0;
 
 	D("[PS][cm3629] %s %d\n", __func__, lpi->ps_enable);
 	if (lpi->ps_enable != 1) {
@@ -1027,6 +1025,9 @@ static int psensor_disable(struct cm3629_info *lpi)
 		mutex_unlock(&ps_enable_mutex);
 		return 0;
 	}
+	lpi->ps_conf1_val = lpi->ps_conf1_val_from_board;
+	lpi->ps_conf2_val = lpi->ps_conf2_val_from_board;
+	lpi->ps_pocket_mode = 0;
 
 	ret = irq_set_irq_wake(lpi->irq, 0);
 	if (ret < 0) {
@@ -1072,6 +1073,7 @@ static int psensor_disable(struct cm3629_info *lpi)
 	}
 #endif
 	mutex_unlock(&ps_enable_mutex);
+	D("[PS][cm3629] %s --%d\n", __func__, lpi->ps_enable);
 	return ret;
 }
 
@@ -2250,6 +2252,26 @@ int power_key_check_in_pocket(void)
 	return (ls_dark && ps_near);
 }
 
+int psensor_enable_by_touch_driver(int on)
+{
+	struct cm3629_info *lpi = lp_info;
+
+	if (!is_probe_success) {
+		D("[PS][cm3629] %s return by cm3629 probe fail\n", __func__);
+		return 0;
+	}
+	psensor_enable_by_touch = 1;
+
+	D("[PS][cm3629] %s on:%d\n", __func__, on);
+	if (on) {
+		psensor_enable(lpi);
+	} else {
+		psensor_disable(lpi);
+	}
+
+	psensor_enable_by_touch = 0;
+	return 0;
+}
 static int cm3629_read_chip_id(struct cm3629_info *lpi)
 {
 	uint8_t chip_id[3] = {0};
