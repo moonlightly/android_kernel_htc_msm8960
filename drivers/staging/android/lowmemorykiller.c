@@ -36,9 +36,9 @@
 #include <linux/oom.h>
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
-#include <linux/profile.h>
 #include <linux/notifier.h>
 
+extern void show_meminfo(void);
 static uint32_t lowmem_debug_level = 2;
 static int lowmem_adj[6] = {
 	0,
@@ -48,10 +48,10 @@ static int lowmem_adj[6] = {
 };
 static int lowmem_adj_size = 4;
 static int lowmem_minfree[6] = {
-	3 * 512,	/* 6MB */
-	2 * 1024,	/* 8MB */
-	4 * 1024,	/* 16MB */
-	16 * 1024,	/* 64MB */
+	3 * 512,	
+	2 * 1024,	
+	4 * 1024,	
+	16 * 1024,	
 };
 static int lowmem_minfree_size = 4;
 
@@ -63,6 +63,26 @@ static unsigned long lowmem_deathpending_timeout;
 			printk(x);			\
 	} while (0)
 
+static void dump_tasks(void)
+{
+       struct task_struct *p;
+       struct task_struct *task;
+
+       pr_info("[ pid ]   uid  total_vm      rss cpu oom_adj  name\n");
+       for_each_process(p) {
+               task = find_lock_task_mm(p);
+               if (!task) {
+                       continue;
+               }
+
+               pr_info("[%5d] %5d  %8lu %8lu %3u     %3d  %s\n",
+                       task->pid, task_uid(task),
+                       task->mm->total_vm, get_mm_rss(task->mm),
+                       task_cpu(task), task->signal->oom_adj, task->comm);
+               task_unlock(task);
+       }
+}
+
 static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 {
 	struct task_struct *tsk;
@@ -73,10 +93,11 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
 	int selected_tasksize = 0;
 	int selected_oom_score_adj;
+	int selected_oom_adj = 0;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free = global_page_state(NR_FREE_PAGES);
 	int other_file = global_page_state(NR_FILE_PAGES) -
-						global_page_state(NR_SHMEM);
+		global_page_state(NR_SHMEM) - global_page_state(NR_MLOCK);
 
 	if (lowmem_adj_size < array_size)
 		array_size = lowmem_adj_size;
@@ -118,6 +139,8 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 
 		if (test_tsk_thread_flag(p, TIF_MEMDIE) &&
 		    time_before_eq(jiffies, lowmem_deathpending_timeout)) {
+			lowmem_print(2, "%d (%s), oom_adj %d score_adj %d, is exiting, return\n"
+					, p->pid, p->comm, p->signal->oom_adj, p->signal->oom_score_adj);
 			task_unlock(p);
 			rcu_read_unlock();
 			return 0;
@@ -141,14 +164,20 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		selected = p;
 		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
-		lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
-			     p->pid, p->comm, oom_score_adj, tasksize);
+		selected_oom_adj = p->signal->oom_adj;
+		lowmem_print(2, "select %d (%s), oom_adj %d score_adj %d, size %d, to kill\n",
+			     p->pid, p->comm, selected_oom_adj, oom_score_adj, tasksize);
 	}
 	if (selected) {
-		lowmem_print(1, "send sigkill to %d (%s), adj %d, size %d\n",
-			     selected->pid, selected->comm,
+		lowmem_print(1, "send sigkill to %d (%s), oom_adj %d, score_adj %d, size %d\n",
+			     selected->pid, selected->comm, selected_oom_adj,
 			     selected_oom_score_adj, selected_tasksize);
 		lowmem_deathpending_timeout = jiffies + HZ;
+		if (selected_oom_adj < 7)
+		{
+			show_meminfo();
+			dump_tasks();
+		}
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
