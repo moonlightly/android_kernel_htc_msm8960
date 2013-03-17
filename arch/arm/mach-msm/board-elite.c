@@ -1162,7 +1162,6 @@ static struct synaptics_i2c_rmi_platform_data syn_ts_3k_2p5D_3030_data[] = {
 		.default_config = 2,
 		.tw_pin_mask = 0x0088,
 		.report_type = SYN_AND_REPORT_TYPE_B,
-		.psensor_detection = 1,
 		.reduce_report_level = {60, 60, 50, 0, 0},
 		.config = {
 			0x30, 0x30, 0x00, 0x05, 0x00, 0x7F, 0x03, 0x1E,
@@ -1468,7 +1467,6 @@ static struct synaptics_i2c_rmi_platform_data syn_ts_3k_2p5D_7070_data[] = {
 		.default_config = 2,
 		.tw_pin_mask = 0x0088,
 		.report_type = SYN_AND_REPORT_TYPE_B,
-		.psensor_detection = 1,
 		.reduce_report_level = {60, 60, 50, 0, 0},
 		.config = {
 			0x70, 0x70, 0x00, 0x05, 0x00, 0x7F, 0x03, 0x1E,
@@ -1774,7 +1772,6 @@ static struct synaptics_i2c_rmi_platform_data syn_ts_3k_data[] = {
 		.default_config = 2,
 		.tw_pin_mask = 0x0088,
 		.report_type = SYN_AND_REPORT_TYPE_B,
-		.psensor_detection = 1,
 		.reduce_report_level = {60, 60, 50, 0, 0},
 		.config = {
 			0x30, 0x30, 0x00, 0x05, 0x00, 0x7F, 0x03, 0x1E,
