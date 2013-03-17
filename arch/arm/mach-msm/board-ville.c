@@ -4138,7 +4138,6 @@ static struct pm8xxx_led_configure pm8921_led_info[] = {
 		.flags		= PM8XXX_ID_GPIO24,
 		.function_flags = LED_PWM_FUNCTION | LED_BLINK_FUNCTION,
 		.gpio_status_switch = green_gpio_config,
-		.pwm_coefficient 	= 40,
 	},
 	[2] = {
 		.name           = "amber",
