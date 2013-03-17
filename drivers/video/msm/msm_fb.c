@@ -42,6 +42,7 @@
 #include <linux/leds.h>
 #include <linux/pm_runtime.h>
 #include <linux/pm_qos.h>
+#include <linux/suspend.h>
 
 #define MSM_FB_C
 #include "msm_fb.h"
@@ -1857,6 +1858,8 @@ static int msm_fb_pan_display(struct fb_var_screeninfo *var,
 		mfd->request_display_on = 0;
 		bl_updated = 0;
 	}
+	if (bl_level_old && !unset_bl_level && !bl_updated)
+		printk("we should set bl_level_old:%d,\n",bl_level_old);
 	if (unset_bl_level && !bl_updated) {
 		pdata = (struct msm_fb_panel_data *)mfd->pdev->
 			dev.platform_data;

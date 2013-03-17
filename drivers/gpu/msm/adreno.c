@@ -68,9 +68,6 @@
 	 | (MMU_CONFIG << MH_MMU_CONFIG__PA_W_CLNT_BEHAVIOR__SHIFT))
 
 static const struct kgsl_functable adreno_functable;
-static volatile int adreno_regwrite_footprint = 0;
-static volatile unsigned int *adreno_regwrite_reg;
-static volatile unsigned int adreno_regwrite_val;
 
 static struct adreno_device device_3d0 = {
 	.dev = {
@@ -1263,12 +1260,32 @@ err:
 	return -ETIMEDOUT;
 }
 
+static bool is_adreno_rbbm_status_idle(struct kgsl_device *device)
+{
+	unsigned int reg_rbbm_status;
+	bool status = false;
+	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
+
+	
+	adreno_regread(device,
+	adreno_dev->gpudev->reg_rbbm_status,
+	&reg_rbbm_status);
+
+	if (adreno_is_a2xx(adreno_dev)) {
+		if (reg_rbbm_status == 0x110)
+			status = true;
+	} else {
+		if (!(reg_rbbm_status & 0x80000000))
+			status = true;
+	}
+	return status;
+}
+
 static unsigned int adreno_isidle(struct kgsl_device *device)
 {
 	int status = false;
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	struct adreno_ringbuffer *rb = &adreno_dev->ringbuffer;
-	unsigned int rbbm_status;
 
 	WARN_ON(device->state == KGSL_STATE_INIT);
 	
@@ -1277,17 +1294,7 @@ static unsigned int adreno_isidle(struct kgsl_device *device)
 		GSL_RB_GET_READPTR(rb, &rb->rptr);
 		if (!device->active_cnt && (rb->rptr == rb->wptr)) {
 			
-			adreno_regread(device,
-				adreno_dev->gpudev->reg_rbbm_status,
-				&rbbm_status);
-
-			if (adreno_is_a2xx(adreno_dev)) {
-				if (rbbm_status == 0x110)
-					status = true;
-			} else {
-				if (!(rbbm_status & 0x80000000))
-					status = true;
-			}
+			status = is_adreno_rbbm_status_idle(device);
 		}
 	} else {
 		status = true;
@@ -1412,13 +1419,7 @@ void adreno_regwrite(struct kgsl_device *device, unsigned int offsetwords,
 	reg = (unsigned int *)(device->reg_virt + (offsetwords << 2));
 
 	wmb();
-	adreno_regwrite_footprint = 1;
-	adreno_regwrite_reg = reg;
-	adreno_regwrite_val = value;
-	dsb();
 	__raw_writel(value, reg);
-	adreno_regwrite_footprint = 0;
-	dsb();
 }
 
 static unsigned int _get_context_id(struct kgsl_context *k_ctxt)
@@ -1518,7 +1519,7 @@ unsigned int adreno_hang_detect(struct kgsl_device *device,
 	if (!adreno_dev->fast_hang_detect)
 		return 0;
 
-	if (device->ftbl->isidle(device))
+	if (is_adreno_rbbm_status_idle(device))
 		return 0;
 
 	for (i = 0; i < hang_detect_regs_count; i++) {

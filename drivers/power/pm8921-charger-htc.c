@@ -4066,6 +4066,7 @@ static void battery_cool(bool enter)
 		htc_gauge_event_notify(HTC_GAUGE_EVENT_TEMP_ZONE_CHANGE);
 	}
 
+
 	
 	if(the_chip->ext_usb)
 	{

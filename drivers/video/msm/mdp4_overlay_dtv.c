@@ -606,6 +606,8 @@ int mdp4_dtv_off(struct platform_device *pdev)
 			mdp4_mixer_stage_down(pipe);
 			mdp4_overlay_pipe_free(pipe);
 			vctrl->base_pipe = NULL;
+			
+			msleep(20);
 		}
 	}
 

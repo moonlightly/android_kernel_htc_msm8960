@@ -38,7 +38,7 @@ static int pre_power_key_status;
 static int pre_power_key_led_status;
 #endif
 #ifdef CONFIG_POWER_KEY_CLR_RESET
-#include <linux/pl_sensor.h>
+#include <linux/cm3629.h>
 #define PWRKEYCHKRST_DELAY (3*HZ + HZ/2)
 #define PWRKEYCLRCHK_DELAY 0
 #define PWRKEYCHKRST_WAKELOCK_TIMEOUT (PWRKEYCHKRST_DELAY + 1 * HZ)

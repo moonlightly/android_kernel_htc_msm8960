@@ -124,7 +124,7 @@
 #define HS_DELAY_SEC			1000
 #define HS_DELAY_MIC_BIAS		200
 #define HS_DELAY_MIC_DETECT		1000
-#define HS_DELAY_INSERT			500
+#define HS_DELAY_INSERT			300
 #define HS_DELAY_REMOVE			200
 #define HS_DELAY_BUTTON			500
 #define HS_DELAY_1WIRE_BUTTON		800
@@ -184,6 +184,7 @@ enum {
 	HEADSET_INDICATOR	= 7,
 	HEADSET_BEATS		= 8,
 	HEADSET_BEATS_SOLO	= 9,
+	HEADSET_UART		= 10,
 };
 
 enum {
@@ -205,6 +206,7 @@ enum {
 	HEADSET_REG_KEY_INT_ENABLE,
 	HEADSET_REG_KEY_ENABLE,
 	HEADSET_REG_INDICATOR_ENABLE,
+	HEADSET_REG_UART_SET,
 	HEADSET_REG_1WIRE_INIT,
 	HEADSET_REG_1WIRE_QUERY,
 	HEADSET_REG_1WIRE_READ_KEY,
@@ -281,6 +283,7 @@ struct hs_notifier_func {
 	int (*key_int_enable)(int);
 	void (*key_enable)(int);
 	int (*indicator_enable)(int);
+	void (*uart_set)(int);
 	int (*hs_1wire_init)(void);
 	int (*hs_1wire_query)(int);
 	int (*hs_1wire_read_key)(void);
@@ -360,7 +363,7 @@ void headset_ext_button(int headset_type, int key_code, int press);
 
 void hs_notify_driver_ready(char *name);
 void hs_notify_hpin_irq(void);
-int hs_notify_plug_event(int insert);
+int hs_notify_plug_event(int insert, unsigned int intr_id);
 int hs_notify_key_event(int key_code);
 int hs_notify_key_irq(void);
 

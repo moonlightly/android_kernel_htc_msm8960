@@ -2831,6 +2831,12 @@ static int msm_open_config(struct inode *inode, struct file *fp)
 		pr_err("%s: nonseekable_open error %d\n", __func__, rc);
 		return rc;
 	}
+
+	if(!g_server_dev.pcam_active) {
+		pr_err("%s: no active camera\n", __func__);
+		return -EFAULT;
+	}
+
 	config_cam->use_count++;
 
 	

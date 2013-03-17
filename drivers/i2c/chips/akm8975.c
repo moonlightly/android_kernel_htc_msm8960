@@ -258,14 +258,8 @@ static int AKECS_SetMode(char mode)
 
 static int AKECS_TransRBuff(char *rbuf, int size)
 {
-	int err = -1;
-	err = wait_event_interruptible_timeout(data_ready_wq,
+	wait_event_interruptible_timeout(data_ready_wq,
 					 atomic_read(&data_ready), 1000);
-	if (err == -ERESTARTSYS) {
-		I("%s interrupted by a signal.\n", __func__);
-		return -1;
-	} else if (err == 0)
-		E("%s data timeout.\n", __func__);
 
 	if (!atomic_read(&data_ready)) {
 		if (!atomic_read(&suspend_flag)) {

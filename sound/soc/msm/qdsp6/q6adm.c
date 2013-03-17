@@ -447,9 +447,7 @@ static int send_adm_cal_block(int port_id, struct acdb_cal_block *aud_cal)
 	if (!result) {
 		pr_err("%s: Set params timed out port = %d, payload = 0x%x\n",
 			__func__, port_id, aud_cal->cal_paddr);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		result = -EINVAL;
 		goto done;
 	}
@@ -917,9 +915,7 @@ int adm_multi_ch_copp_open(int port_id, int path, int rate, int channel_mode,
 		if (!ret) {
 			pr_err("%s ADM open failed for port %d\n", __func__,
 								port_id);
-#ifdef HTC_AUD_DEBUG
                         BUG();
-#endif
 			ret = -EINVAL;
 			goto fail_cmd;
 		}

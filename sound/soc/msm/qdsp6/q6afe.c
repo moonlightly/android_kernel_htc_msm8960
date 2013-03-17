@@ -413,9 +413,7 @@ static void afe_send_cal_block(int32_t path, u16 port_id)
 				 msecs_to_jiffies(TIMEOUT_MS));
 	if (!result) {
 		pr_err("%s: wait_event timeout SET AFE CAL\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		goto done;
 	}
 
@@ -573,9 +571,7 @@ int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 				msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout PORT START\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		ret = -EINVAL;
 		goto fail_cmd;
 	}
@@ -766,9 +762,7 @@ int afe_loopback(u16 enable, u16 dst_port, u16 src_port)
 				msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		ret = -EINVAL;
 	}
 done:
@@ -826,9 +820,7 @@ int afe_loopback_cfg(u16 enable, u16 dst_port, u16 src_port, u16 mode)
 			msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		ret = -EINVAL;
 		goto fail_cmd;
 	}
@@ -968,9 +960,7 @@ int afe_apply_gain(u16 port_id, u16 gain)
 			msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		ret = -EINVAL;
 		goto fail_cmd;
 	}
@@ -1045,9 +1035,7 @@ int afe_start_pseudo_port(u16 port_id)
 				 msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		return -EINVAL;
 	}
 
@@ -1121,9 +1109,7 @@ int afe_stop_pseudo_port(u16 port_id)
 				 msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		return -EINVAL;
 	}
 
@@ -1654,9 +1640,7 @@ int afe_sidetone(u16 tx_port_id, u16 rx_port_id, u16 enable, uint16_t gain)
 			msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
 		pr_err("%s: wait_event timeout\n", __func__);
-#ifdef HTC_AUD_DEBUG
                 BUG();
-#endif
 		ret = -EINVAL;
 		goto fail_cmd;
 	}
@@ -1761,11 +1745,11 @@ static int __init afe_init(void)
 	this_afe.apr = NULL;
 #ifdef CONFIG_DEBUG_FS
 	debugfs_afelb = debugfs_create_file("afe_loopback",
-	S_IFREG | S_IWUSR, NULL, (void *) "afe_loopback",
+	S_IFREG | S_IWUGO, NULL, (void *) "afe_loopback",
 	&afe_debug_fops);
 
 	debugfs_afelb_gain = debugfs_create_file("afe_loopback_gain",
-	S_IFREG | S_IWUSR, NULL, (void *) "afe_loopback_gain",
+	S_IFREG | S_IWUGO, NULL, (void *) "afe_loopback_gain",
 	&afe_debug_fops);
 
 

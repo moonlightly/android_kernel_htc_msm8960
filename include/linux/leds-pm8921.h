@@ -70,7 +70,6 @@ struct pm8xxx_led_configure {
 	int		out_current;
 	int		function_flags;
 	int		duties[64];
-	int		pwm_coefficient;
 	void 		(*gpio_status_switch)(bool);
 };
 
@@ -93,7 +92,6 @@ struct pm8xxx_led_data {
 	int					 out_current;
 	int 				     *duties;
 	int 					led_sync;
-	int				pwm_coefficient;
 	u8			             	 reg;
 	struct device				*dev;
 	struct delayed_work		blink_delayed_work;

@@ -28,7 +28,7 @@
 #include <linux/mfd/pm8xxx/pm8921-charger.h>
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
 #include <linux/mfd/pm8xxx/pm8921-bms.h>
-#include <linux/leds-pm8921.h>
+#include <linux/leds-pm8xxx.h>
 #include <linux/mfd/pm8xxx/vibrator.h>
 #include <linux/mfd/pm8xxx/ccadc.h>
 

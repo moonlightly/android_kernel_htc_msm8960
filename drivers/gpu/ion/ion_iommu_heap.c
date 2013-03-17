@@ -46,6 +46,8 @@ static int ion_iommu_heap_allocate(struct ion_heap *heap,
 {
 	int ret, i;
 	struct ion_iommu_priv_data *data = NULL;
+	pgprot_t page_prot = pgprot_writecombine(PAGE_KERNEL);
+	void *ptr = NULL;
 
 	if (msm_use_iommu()) {
 		struct scatterlist *sg;
@@ -77,12 +79,20 @@ static int ion_iommu_heap_allocate(struct ion_heap *heap,
 			goto err2;
 
 		for_each_sg(table->sgl, sg, table->nents, i) {
-			data->pages[i] = alloc_page(GFP_KERNEL | __GFP_ZERO);
+			data->pages[i] = alloc_page(GFP_KERNEL | __GFP_HIGHMEM);
 			if (!data->pages[i])
 				goto err3;
 
 			sg_set_page(sg, data->pages[i], PAGE_SIZE, 0);
 		}
+
+		ptr = vmap(data->pages, data->nrpages, VM_IOREMAP, page_prot);
+		if (ptr != NULL) {
+			memset(ptr, 0, data->size);
+			dmac_flush_range(ptr, ptr + data->size);
+			vunmap(ptr);
+		} else
+			pr_err("%s: vmap() failed\n", __func__);
 
 		buffer->priv_virt = data;
 		
@@ -122,11 +132,12 @@ static void ion_iommu_heap_free(struct ion_buffer *buffer)
 	for (i = 0; i < data->nrpages; i++)
 		__free_page(data->pages[i]);
 
-	kfree(data->pages);
-	kfree(data);
 	
 	atomic_sub(data->size, &v);
 	
+
+	kfree(data->pages);
+	kfree(data);
 }
 
 int ion_iommu_heap_dump_size(void)

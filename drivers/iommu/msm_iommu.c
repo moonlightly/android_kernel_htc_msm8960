@@ -58,10 +58,6 @@ static inline void clean_pte(unsigned long *start, unsigned long *end,
 
 static int msm_iommu_tex_class[4];
 
-static volatile struct iommu_domain *flush_iotlb_domain = NULL;
-static volatile int flush_iotlb_footprint = 0;
-static volatile struct msm_iommu_ctx_drvdata *flush_iotlb_ctx_drvdata = NULL;
-
 DEFINE_MUTEX(msm_iommu_lock);
 
 struct msm_priv {
@@ -134,46 +130,26 @@ static int __flush_iotlb(struct iommu_domain *domain)
 	int ret = 0;
 	int asid;
 
-	flush_iotlb_footprint = 0;
-	flush_iotlb_domain = domain;
-	dsb();
-
 	list_for_each_entry(ctx_drvdata, &priv->list_attached, attached_elm) {
-		flush_iotlb_ctx_drvdata = ctx_drvdata;
 		if (!ctx_drvdata->pdev || !ctx_drvdata->pdev->dev.parent)
 			BUG();
 
 		iommu_drvdata = dev_get_drvdata(ctx_drvdata->pdev->dev.parent);
 		if (!iommu_drvdata)
 			BUG();
-		flush_iotlb_footprint = 1;
-		dsb();
+
 		ret = __enable_clocks(iommu_drvdata);
-		flush_iotlb_footprint = 2;
-		dsb();
 		if (ret)
 			goto fail;
 
 		asid = GET_CONTEXTIDR_ASID(iommu_drvdata->base,
 					   ctx_drvdata->num);
-		flush_iotlb_footprint = 3;
-		dsb();
 
 		SET_TLBIASID(iommu_drvdata->base, ctx_drvdata->num, asid);
-		flush_iotlb_footprint = 4;
 		mb();
 		__disable_clocks(iommu_drvdata);
-		flush_iotlb_footprint = 5;
-		dsb();
 	}
-	flush_iotlb_footprint = 6;
-	dsb();
 fail:
-	WARN_ON(ret);
-	flush_iotlb_footprint = 7;
-	flush_iotlb_domain = NULL;
-	flush_iotlb_ctx_drvdata = NULL;
-	dsb();
 	return ret;
 }
 

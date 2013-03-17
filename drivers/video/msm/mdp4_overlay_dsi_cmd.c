@@ -846,7 +846,7 @@ static void mdp4_overlay_update_dsi_cmd(struct msm_fb_data_type *mfd)
 		pipe = vctrl->base_pipe;
 	}
 
-	MDP_OUTP(MDP_BASE + 0x021c, 500); 
+	MDP_OUTP(MDP_BASE + 0x021c, 10); 
 
 	MDP_OUTP(MDP_BASE + 0x000a0, 0x10);
 	

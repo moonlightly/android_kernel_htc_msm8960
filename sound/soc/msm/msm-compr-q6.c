@@ -330,17 +330,6 @@ static int msm_compr_playback_prepare(struct snd_pcm_substream *substream)
 	struct asm_wma_cfg wma_cfg;
 	struct asm_wmapro_cfg wma_pro_cfg;
 	int ret;
-	struct asm_softpause_params softpause = {
-		.enable = SOFT_PAUSE_ENABLE,
-		.period = SOFT_PAUSE_PERIOD*3,
-		.step = SOFT_PAUSE_STEP,
-		.rampingcurve = SOFT_PAUSE_CURVE_LINEAR,
-	};
-	struct asm_softvolume_params softvol = {
-		.period = SOFT_VOLUME_PERIOD,
-		.step = SOFT_VOLUME_STEP,
-		.rampingcurve = SOFT_VOLUME_CURVE_LINEAR,
-	};
 
 	pr_debug("[%p] compressed stream prepare\n", prtd);
 	prtd->pcm_size = snd_pcm_lib_buffer_bytes(substream);
@@ -444,14 +433,6 @@ static int msm_compr_playback_prepare(struct snd_pcm_substream *substream)
 
 	prtd->enabled = 1;
 	prtd->cmd_ack = 0;
-
-	if (compressed_audio.prtd && compressed_audio.prtd->audio_client) {
-		pr_debug("[%p] %s q6asm_set_softvolume\n", prtd, __func__);
-		q6asm_set_softpause(compressed_audio.prtd->audio_client,
-							&softpause);
-		q6asm_set_softvolume(compressed_audio.prtd->audio_client,
-							&softvol);
-	}
 
 	return 0;
 }
@@ -589,17 +570,6 @@ static int msm_compr_open(struct snd_pcm_substream *substream)
 	struct compr_audio *compr;
 	struct msm_audio *prtd;
 	int ret = 0;
-	struct asm_softpause_params softpause = {
-		.enable = SOFT_PAUSE_ENABLE,
-		.period = SOFT_PAUSE_PERIOD,
-		.step = SOFT_PAUSE_STEP,
-		.rampingcurve = SOFT_PAUSE_CURVE_LINEAR,
-	};
-	struct asm_softvolume_params softvol = {
-		.period = SOFT_VOLUME_PERIOD,
-		.step = SOFT_VOLUME_STEP,
-		.rampingcurve = SOFT_VOLUME_CURVE_LINEAR,
-	};
 
 	pr_debug("%s\n", __func__);
 	str_name = (char*)rtd->dai_link->stream_name;
@@ -652,36 +622,8 @@ static int msm_compr_open(struct snd_pcm_substream *substream)
 	atomic_set(&prtd->eos, 0);
 	if (str_name != NULL && !strncmp(str_name,"COMPR2", 6)) {
 		compressed2_audio.prtd =  &compr->prtd;
-		ret = compressed2_set_volume(compressed2_audio.volume);
-		if (ret < 0)
-			pr_err("[%p] %s : Set Volume failed : %d", prtd, __func__, ret);
-
-		ret = q6asm_set_softpause(compressed2_audio.prtd->audio_client,
-									&softpause);
-		if (ret < 0)
-			pr_err("[%p] %s: Send SoftPause Param failed ret=%d\n",
-				prtd, __func__, ret);
-		ret = q6asm_set_softvolume(compressed2_audio.prtd->audio_client,
-									&softvol);
-		if (ret < 0)
-			pr_err("[%p] %s: Send SoftVolume Param failed ret=%d\n",
-				prtd, __func__, ret);
 	} else {
 		compressed_audio.prtd =  &compr->prtd;
-		ret = compressed_set_volume(compressed_audio.volume);
-		if (ret < 0)
-			pr_err("[%p] %s : Set Volume failed : %d", prtd,__func__, ret);
-
-		ret = q6asm_set_softpause(compressed_audio.prtd->audio_client,
-									&softpause);
-		if (ret < 0)
-			pr_err("[%p] %s: Send SoftPause Param failed ret=%d\n",
-				prtd, __func__, ret);
-		ret = q6asm_set_softvolume(compressed_audio.prtd->audio_client,
-									&softvol);
-		if (ret < 0)
-			pr_err("[%p] %s: Send SoftVolume Param failed ret=%d\n",
-				prtd, __func__, ret);
 	}
 
 	return 0;
@@ -860,6 +802,19 @@ static int msm_compr_hw_params(struct snd_pcm_substream *substream,
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
 	struct audio_buffer *buf;
 	int dir, ret;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	char * str_name;
+	struct asm_softpause_params softpause = {
+		.enable = SOFT_PAUSE_ENABLE,
+		.period = SOFT_PAUSE_PERIOD*3,
+		.step = SOFT_PAUSE_STEP,
+		.rampingcurve = SOFT_PAUSE_CURVE_LINEAR,
+	};
+	struct asm_softvolume_params softvol = {
+		.period = SOFT_VOLUME_PERIOD,
+		.step = SOFT_VOLUME_STEP,
+		.rampingcurve = SOFT_VOLUME_CURVE_LINEAR,
+	};
 
 	pr_debug("[%p] %s\n", prtd, __func__);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
@@ -905,6 +860,48 @@ static int msm_compr_hw_params(struct snd_pcm_substream *substream,
 			return -ENOMEM;
 		}
 	}
+	str_name = (char*)rtd->dai_link->stream_name;
+	if (str_name != NULL)
+		pr_info("%s, dai_link stream name = %s\n", __func__, str_name);
+
+	if (str_name != NULL && !strncmp(str_name,"COMPR2", 6)) {
+		if (compressed2_audio.prtd && compressed2_audio.prtd->audio_client) {
+			pr_debug("[%p] %s compressed2 set ramping\n", prtd, __func__);
+			ret = compressed2_set_volume(compressed2_audio.volume);
+			if (ret < 0)
+				pr_err("[%p] %s : Set Volume2 failed : %d", prtd, __func__, ret);
+
+			ret = q6asm_set_softpause(compressed2_audio.prtd->audio_client,
+										&softpause);
+			if (ret < 0)
+				pr_err("[%p] %s: Send SoftPause2 Param failed ret=%d\n",
+					prtd, __func__, ret);
+			ret = q6asm_set_softvolume(compressed2_audio.prtd->audio_client,
+										&softvol);
+			if (ret < 0)
+				pr_err("[%p] %s: Send SoftVolume2 Param failed ret=%d\n",
+					prtd, __func__, ret);
+		}
+	} else {
+		if (compressed_audio.prtd && compressed_audio.prtd->audio_client) {
+			pr_debug("[%p] %s compressed set ramping\n", prtd, __func__);
+			ret = compressed_set_volume(compressed_audio.volume);
+			if (ret < 0)
+				pr_err("[%p] %s : Set Volume failed : %d", prtd,__func__, ret);
+
+			ret = q6asm_set_softpause(compressed_audio.prtd->audio_client,
+										&softpause);
+			if (ret < 0)
+				pr_err("[%p] %s: Send SoftPause Param failed ret=%d\n",
+					prtd, __func__, ret);
+			ret = q6asm_set_softvolume(compressed_audio.prtd->audio_client,
+										&softvol);
+			if (ret < 0)
+				pr_err("[%p] %s: Send SoftVolume Param failed ret=%d\n",
+					prtd, __func__, ret);
+		}
+	}
+
 	ret = q6asm_set_io_mode(prtd->audio_client, ASYNC_IO_MODE);
 	if (ret < 0) {
 		pr_err("[%p] %s: Set IO mode failed\n", prtd, __func__);

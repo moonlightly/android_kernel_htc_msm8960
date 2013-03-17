@@ -135,7 +135,6 @@ struct synaptics_i2c_rmi_platform_data {
 	uint8_t i2c_err_handler_en;
 	uint8_t energy_ratio_relaxation;
 	uint8_t multitouch_calibration;
-	uint8_t psensor_detection;
 	uint8_t PixelTouchThreshold_bef_unlock;
 };
 

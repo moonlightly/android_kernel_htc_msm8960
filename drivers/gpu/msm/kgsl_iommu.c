@@ -74,46 +74,26 @@ static struct kgsl_iommu_device *get_iommu_device(struct kgsl_iommu_unit *unit,
 static int kgsl_iommu_fault_handler(struct iommu_domain *domain,
 	struct device *dev, unsigned long addr, int flags)
 {
-	static unsigned long last_pagefault_jiffies;
-	static unsigned long last_addr;
-	static int last_pid;
 	struct kgsl_iommu_unit *iommu_unit = get_iommu_unit(dev);
 	struct kgsl_iommu_device *iommu_dev = get_iommu_device(iommu_unit, dev);
 	unsigned int ptbase, fsr;
-	unsigned long diff_addr;
-	int current_pid;
-
-	unsigned long wait_time_jiff = 0;
 
 	if (!iommu_dev) {
 		KGSL_CORE_ERR("Invalid IOMMU device %p\n", dev);
 		return -ENOSYS;
 	}
 
-	wait_time_jiff = last_pagefault_jiffies + msecs_to_jiffies(100);
-	last_pagefault_jiffies = jiffies;
-	diff_addr = abs(addr - last_addr);
-
 	ptbase = KGSL_IOMMU_GET_IOMMU_REG(iommu_unit->reg_map.hostptr,
-			iommu_dev->ctx_id, TTBR0);
-	current_pid = kgsl_mmu_get_ptname_from_ptbase(ptbase);
+					iommu_dev->ctx_id, TTBR0);
 
-	if ((last_pid != current_pid) ||
-	    (diff_addr > 4*PAGE_SIZE) ||
-	    (time_after(jiffies, wait_time_jiff))
-	   ) {
-		fsr = KGSL_IOMMU_GET_IOMMU_REG(iommu_unit->reg_map.hostptr,
-			iommu_dev->ctx_id, FSR);
+	fsr = KGSL_IOMMU_GET_IOMMU_REG(iommu_unit->reg_map.hostptr,
+		iommu_dev->ctx_id, FSR);
 
-		KGSL_MEM_CRIT(iommu_dev->kgsldev,
-			"GPU PAGE FAULT: addr = %lX pid = %d\n",
-			addr, kgsl_mmu_get_ptname_from_ptbase(ptbase));
-		KGSL_MEM_CRIT(iommu_dev->kgsldev, "context = %d FSR = %X\n",
-			iommu_dev->ctx_id, fsr);
-
-		last_pid = current_pid;
-		last_addr = addr;
-	}
+	KGSL_MEM_CRIT(iommu_dev->kgsldev,
+		"GPU PAGE FAULT: addr = %lX pid = %d\n",
+		addr, kgsl_mmu_get_ptname_from_ptbase(ptbase));
+	KGSL_MEM_CRIT(iommu_dev->kgsldev, "context = %d FSR = %X\n",
+		iommu_dev->ctx_id, fsr);
 
 	trace_kgsl_mmu_pagefault(iommu_dev->kgsldev, addr,
 			kgsl_mmu_get_ptname_from_ptbase(ptbase), 0);

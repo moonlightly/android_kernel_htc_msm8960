@@ -89,6 +89,7 @@ struct cable_detect_info {
 
 	int  audio_dock_lock;
 	int notify_init;
+	int enable_vbus_usb_switch;
 } the_cable_info;
 
 
@@ -227,7 +228,7 @@ static void check_vbus_in(struct work_struct *w)
 	if (vbus != vbus_in) {
 		vbus = vbus_in;
 
-		if(pInfo->accessory_type == DOCK_STATE_MHL) {
+		if(pInfo->accessory_type == DOCK_STATE_MHL && pInfo->enable_vbus_usb_switch == 0) {
 			CABLE_INFO("%s: usb_uart switch, MHL cable , Do nothing\n", __func__);
 		} else {
 			if (pInfo->usb_uart_switch)
@@ -692,6 +693,7 @@ static void mhl_status_notifier_func(bool isMHL, int charging_type)
 		mhl_connected = 1;
 		set_irq_type(pInfo->idpin_irq,
 			id_pin ? IRQF_TRIGGER_LOW : IRQF_TRIGGER_HIGH);
+		if (vbus && (charging_type > CONNECT_TYPE_NONE)) {
 #ifdef CONFIG_INTERNAL_CHARGING_SUPPORT
 			if (charging_type == CONNECT_TYPE_INTERNAL)
 				charging_type = CONNECT_TYPE_NONE;
@@ -699,6 +701,7 @@ static void mhl_status_notifier_func(bool isMHL, int charging_type)
 #else
 			send_cable_connect_notify(charging_type);
 #endif
+		}
 #if 0
 #ifdef CONFIG_INTERNAL_CHARGING_SUPPORT
 		else if (vbus)
@@ -889,6 +892,7 @@ static int cable_detect_probe(struct platform_device *pdev)
 		pInfo->mhl_version_ctrl_flag = pdata->mhl_version_ctrl_flag;
 		pInfo->mhl_1v2_power = pdata->mhl_1v2_power;
 		pInfo->get_adc_cb = pdata->get_adc_cb;
+		pInfo->enable_vbus_usb_switch = pdata->enable_vbus_usb_switch;
 
 #endif
 
